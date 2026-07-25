@@ -1,7 +1,3 @@
--- ============================================================
---  MEGA SCRIPT: SPEED BYPASS (con GUI) + FPS BOOST (completo)
--- ============================================================
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -15,9 +11,9 @@ if not LP then
 end
 
 -- ============================================================
---  PARTE 1: SPEED BYPASS (con GUI táctil)
+--  PARTE 1: SPEED BYPASS (con GUI táctil) - APAGADO POR DEFECTO
 -- ============================================================
-local speedEnabled = false
+local speedEnabled = false  -- 🔴 CAMBIADO A FALSE (apagado por defecto)
 local speedConnection = nil
 
 -- GUI Speed
@@ -49,7 +45,7 @@ status.BackgroundTransparency = 1
 status.Font = Enum.Font.GothamBold
 status.TextScaled = true
 status.TextColor3 = Color3.new(1, 1, 1)
-status.Text = "SPEED : OFF"
+status.Text = "SPEED : OFF"  -- 🔴 Apagado por defecto
 status.Parent = frame
 
 -- Función Speed
@@ -99,7 +95,7 @@ local function setSpeed(state)
     end)
 end
 
--- Click para toggle
+-- Click para toggle (enciende/apaga)
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
@@ -107,8 +103,7 @@ frame.InputBegan:Connect(function(input)
     end
 end)
 
--- Auto encender Speed
-setSpeed(true)
+-- 🔴 ELIMINADO: setSpeed(true)  <- Esto ya no enciende automáticamente
 
 -- ============================================================
 --  PARTE 2: FPS BOOST (integrado del segundo script)
@@ -389,7 +384,7 @@ end)
 --  ESTADO FINAL
 -- ============================================================
 print("✅ SPEED BYPASS + FPS BOOST UNIFICADOS")
-print("   🚀 Speed: ON (toca la GUI para toggle)")
+print("   🚀 Speed: OFF (toca la GUI para encender)")  -- 🔴 Cambiado
 print("   🔧 FPS Boost: ACTIVADO")
 print("   🧹 Limpieza de texturas: ACTIVADA")
 print("   🎨 Materiales a PLÁSTICO: ACTIVADO")
