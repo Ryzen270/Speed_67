@@ -48,7 +48,7 @@ status.TextColor3 = Color3.new(1, 1, 1)
 status.Text = "SPEED : OFF"  -- 🔴 Apagado por defecto
 status.Parent = frame
 
--- Función Speed
+-- Función Speed (AHORA CON CUPID'S WINGS)
 local function setSpeed(state)
     speedEnabled = state
 
@@ -74,7 +74,8 @@ local function setSpeed(state)
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if not hum or not hrp then return end
 
-        local tool = char:FindFirstChild("Flying Carpet") or LP.Backpack:FindFirstChild("Flying Carpet")
+        -- 🔴 CAMBIADO: Flying Carpet → Cupid's Wings
+        local tool = char:FindFirstChild("Cupid's Wings") or LP.Backpack:FindFirstChild("Cupid's Wings")
 
         if tool then
             if tool.Parent ~= char then
@@ -102,8 +103,6 @@ frame.InputBegan:Connect(function(input)
         setSpeed(not speedEnabled)
     end
 end)
-
--- 🔴 ELIMINADO: setSpeed(true)  <- Esto ya no enciende automáticamente
 
 -- ============================================================
 --  PARTE 2: FPS BOOST (integrado del segundo script)
@@ -148,7 +147,7 @@ end
 if LP.Character then wireChar(LP.Character) end
 LP.CharacterAdded:Connect(wireChar)
 
--- ===== CARPET TP =====
+-- ===== CARPET TP (AHORA CON CUPID'S WINGS) =====
 local _fhCarpetActiveTween = nil
 
 function _G._FH_CarpetTP(targetCF, speedOverride)
@@ -161,11 +160,12 @@ function _G._FH_CarpetTP(targetCF, speedOverride)
     local dur = math.max(0.05, dist / (speedOverride or _G._FH_CarpetTP_Speed or 214))
 
     local bp = LP:FindFirstChildOfClass("Backpack")
-    local carpet = (bp and bp:FindFirstChild("Flying Carpet")) or chr:FindFirstChild("Flying Carpet")
+    -- 🔴 CAMBIADO: Flying Carpet → Cupid's Wings
+    local wings = (bp and bp:FindFirstChild("Cupid's Wings")) or chr:FindFirstChild("Cupid's Wings")
     local hum = chr:FindFirstChildOfClass("Humanoid")
 
-    if carpet and hum and carpet.Parent ~= chr then
-        pcall(function() hum:EquipTool(carpet) end)
+    if wings and hum and wings.Parent ~= chr then
+        pcall(function() hum:EquipTool(wings) end)
     end
 
     if _fhCarpetActiveTween then
@@ -379,13 +379,3 @@ task.spawn(function()
         Lighting.Brightness = 1
     end)
 end)
-
--- ============================================================
---  ESTADO FINAL
--- ============================================================
-print("✅ SPEED BYPASS + FPS BOOST UNIFICADOS")
-print("   🚀 Speed: OFF (toca la GUI para encender)")  -- 🔴 Cambiado
-print("   🔧 FPS Boost: ACTIVADO")
-print("   🧹 Limpieza de texturas: ACTIVADA")
-print("   🎨 Materiales a PLÁSTICO: ACTIVADO")
-print("   🌑 Sombras desactivadas")
