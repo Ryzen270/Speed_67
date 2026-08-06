@@ -13,7 +13,7 @@ end
 -- ============================================================
 --  PARTE 1: SPEED BYPASS (con GUI táctil) - APAGADO POR DEFECTO
 -- ============================================================
-local speedEnabled = false  -- 🔴 CAMBIADO A FALSE (apagado por defecto)
+local speedEnabled = false
 local speedConnection = nil
 
 -- GUI Speed
@@ -45,10 +45,25 @@ status.BackgroundTransparency = 1
 status.Font = Enum.Font.GothamBold
 status.TextScaled = true
 status.TextColor3 = Color3.new(1, 1, 1)
-status.Text = "SPEED : OFF"  -- 🔴 Apagado por defecto
+status.Text = "SPEED : OFF"
 status.Parent = frame
 
--- Función Speed (AHORA CON CUPID'S WINGS)
+-- Función para obtener el objeto de vuelo (alas o alfombra)
+local function getFlightItem(char, backpack)
+    -- Primero buscar Cupid's Wings
+    local wings = char:FindFirstChild("Cupid's Wings") or 
+                  (backpack and backpack:FindFirstChild("Cupid's Wings"))
+    if wings then return wings end
+    
+    -- Si no hay alas, buscar Flying Carpet
+    local carpet = char:FindFirstChild("Flying Carpet") or 
+                   (backpack and backpack:FindFirstChild("Flying Carpet"))
+    if carpet then return carpet end
+    
+    return nil
+end
+
+-- Función Speed
 local function setSpeed(state)
     speedEnabled = state
 
@@ -74,12 +89,12 @@ local function setSpeed(state)
         local hrp = char:FindFirstChild("HumanoidRootPart")
         if not hum or not hrp then return end
 
-        -- 🔴 CAMBIADO: Flying Carpet → Cupid's Wings
-        local tool = char:FindFirstChild("Cupid's Wings") or LP.Backpack:FindFirstChild("Cupid's Wings")
+        local backpack = LP:FindFirstChild("Backpack")
+        local flightItem = getFlightItem(char, backpack)
 
-        if tool then
-            if tool.Parent ~= char then
-                pcall(function() hum:EquipTool(tool) end)
+        if flightItem then
+            if flightItem.Parent ~= char then
+                pcall(function() hum:EquipTool(flightItem) end)
             end
 
             local moveDir = hum.MoveDirection
@@ -96,7 +111,7 @@ local function setSpeed(state)
     end)
 end
 
--- Click para toggle (enciende/apaga)
+-- Click para toggle
 frame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
     or input.UserInputType == Enum.UserInputType.Touch then
@@ -105,10 +120,9 @@ frame.InputBegan:Connect(function(input)
 end)
 
 -- ============================================================
---  PARTE 2: FPS BOOST (integrado del segundo script)
+--  PARTE 2: FPS BOOST
 -- ============================================================
 
--- Variables globales compatibles
 _G._FH_CarpetTP_Speed = _G._FH_CarpetTP_Speed or 214
 _G._FH_AlwaysOnFPS = true
 
@@ -147,7 +161,7 @@ end
 if LP.Character then wireChar(LP.Character) end
 LP.CharacterAdded:Connect(wireChar)
 
--- ===== CARPET TP (AHORA CON CUPID'S WINGS) =====
+-- ===== CARPET TP (CON SOPORTE PARA AMBOS) =====
 local _fhCarpetActiveTween = nil
 
 function _G._FH_CarpetTP(targetCF, speedOverride)
@@ -160,12 +174,11 @@ function _G._FH_CarpetTP(targetCF, speedOverride)
     local dur = math.max(0.05, dist / (speedOverride or _G._FH_CarpetTP_Speed or 214))
 
     local bp = LP:FindFirstChildOfClass("Backpack")
-    -- 🔴 CAMBIADO: Flying Carpet → Cupid's Wings
-    local wings = (bp and bp:FindFirstChild("Cupid's Wings")) or chr:FindFirstChild("Cupid's Wings")
+    local flightItem = getFlightItem(chr, bp)
     local hum = chr:FindFirstChildOfClass("Humanoid")
 
-    if wings and hum and wings.Parent ~= chr then
-        pcall(function() hum:EquipTool(wings) end)
+    if flightItem and hum and flightItem.Parent ~= chr then
+        pcall(function() hum:EquipTool(flightItem) end)
     end
 
     if _fhCarpetActiveTween then
