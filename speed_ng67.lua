@@ -1,394 +1,210 @@
-local Players = game:GetService("Players")
+-- =====================================================================
+-- Best Pet ESP - Always Active with Machine Block
+-- =====================================================================
+
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
+local Players = game:GetService("Players")
 
-local LP = Players.LocalPlayer
-if not LP then
-    Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
-    LP = Players.LocalPlayer
+getgenv().BestPetESP = getgenv().BestPetESP or {
+    active = false,
+    connection = nil,
+    espInstance = nil
+}
+
+local CONFIG = {
+    ScanInterval = 0.5,
+    TargetFolder = "Debris",
+    TemplateName = "FastOverheadTemplate"
+}
+
+-- =====================================================================
+-- Fusing / machine-block helper (used by scanAllPets)
+-- =====================================================================
+local _BLOCKING_MACHINE_TYPES = {
+    Fuse     = true,
+    Duel     = true,
+    Trade    = true,
+    Crafting = true,
+}
+
+local function _VanishIsFusing(animalData)
+    if type(animalData) ~= "table" then return false end
+    local m = animalData.Machine
+    if type(m) ~= "table" then return false end
+    return _BLOCKING_MACHINE_TYPES[m.Type] == true
 end
 
--- ============================================================
---  PARTE 1: SPEED BYPASS (con GUI táctil) - APAGADO POR DEFECTO
--- ============================================================
-local speedEnabled = false
-local speedConnection = nil
-
--- GUI Speed
-local gui = Instance.new("ScreenGui")
-gui.Name = "MiniSpeedGUI"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.Parent = LP:WaitForChild("PlayerGui")
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 130, 0, 45)
-frame.Position = UDim2.new(0.82, 0, 0.15, 0)
-frame.AnchorPoint = Vector2.new(0, 0)
-frame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Parent = gui
-
-Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
-
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(0, 170, 255)
-stroke.Thickness = 1.5
-stroke.Parent = frame
-
-local status = Instance.new("TextLabel")
-status.Size = UDim2.new(1, 0, 1, 0)
-status.BackgroundTransparency = 1
-status.Font = Enum.Font.GothamBold
-status.TextScaled = true
-status.TextColor3 = Color3.new(1, 1, 1)
-status.Text = "SPEED : OFF"
-status.Parent = frame
-
--- Función para obtener el objeto de vuelo (alas o alfombra)
-local function getFlightItem(char, backpack)
-    -- Primero buscar Cupid's Wings
-    local wings = char:FindFirstChild("Cupid's Wings") or 
-                  (backpack and backpack:FindFirstChild("Cupid's Wings"))
-    if wings then return wings end
-
-    -- Si no hay alas, buscar Flying Carpet
-    local carpet = char:FindFirstChild("Flying Carpet") or 
-                   (backpack and backpack:FindFirstChild("Flying Carpet"))
-    if carpet then return carpet end
-
-    return nil
-end
-
--- Función Speed
-local function setSpeed(state)
-    speedEnabled = state
-
-    if speedConnection then
-        speedConnection:Disconnect()
-        speedConnection = nil
-    end
-
-    if not state then
-        status.Text = "SPEED : OFF"
-        frame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-        return
-    end
-
-    status.Text = "SPEED : ON"
-    frame.BackgroundColor3 = Color3.fromRGB(0, 120, 70)
-
-    speedConnection = RunService.Heartbeat:Connect(function()
-        local char = LP.Character
-        if not char then return end
-
-        local hum = char:FindFirstChild("Humanoid")
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        if not hum or not hrp then return end
-
-        local backpack = LP:FindFirstChild("Backpack")
-        local flightItem = getFlightItem(char, backpack)
-
-        if flightItem then
-            if flightItem.Parent ~= char then
-                pcall(function() hum:EquipTool(flightItem) end)
-            end
-
-            local moveDir = hum.MoveDirection
-            if moveDir.Magnitude > 0 then
-                hrp.AssemblyLinearVelocity = Vector3.new(
-                    moveDir.X * 150,
-                    hrp.AssemblyLinearVelocity.Y,
-                    moveDir.Z * 150
-                )
-            else
-                hrp.AssemblyLinearVelocity = Vector3.new(0, hrp.AssemblyLinearVelocity.Y, 0)
-            end
-        end
-    end)
-end
-
--- Click para toggle
-frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        setSpeed(not speedEnabled)
-    end
-end)
-
--- ============================================================
---  PARTE 2: FPS BOOST
--- ============================================================
-
-_G._FH_CarpetTP_Speed = _G._FH_CarpetTP_Speed or 214
-_G._FH_AlwaysOnFPS = true
-
--- ===== FUNCIONES DE OPTIMIZACIÓN =====
-
-local function stripToolPhysics(tool)
-    if not tool or not tool:IsA("Tool") then return end
-    for _, d in ipairs(tool:GetDescendants()) do
-        if d:IsA("BasePart") then
-            pcall(function()
-                d.Massless = true
-                d.CanCollide = false
-            end)
-        elseif d:IsA("BodyVelocity") or d:IsA("BodyPosition") or d:IsA("BodyGyro")
-            or d:IsA("AlignPosition") or d:IsA("AlignOrientation") or d:IsA("VectorForce")
-            or d:IsA("LinearVelocity") or d:IsA("AngularVelocity") then
-            pcall(function() d.Enabled = false end)
+local function isMyBase(plotName)
+    local plot = workspace.Plots:FindFirstChild(plotName)
+    if not plot then return false end
+    
+    local sign = plot:FindFirstChild("PlotSign")
+    if sign then
+        local yourBase = sign:FindFirstChild("YourBase")
+        if yourBase and yourBase:IsA("BillboardGui") then
+            return yourBase.Enabled == true
         end
     end
-    tool.DescendantAdded:Connect(function(d)
-        if d:IsA("BasePart") then
-            pcall(function()
-                d.Massless = true
-                d.CanCollide = false
-            end)
+    return false
+end
+
+local function parseValue(text)
+    if not text then return 0 end
+    text = tostring(text):gsub("%s", ""):gsub("/s", "")
+    
+    local numStr, suffix = text:match("([%d%.]+)([KkMmBbTtQq]?)")
+    if not numStr then return 0 end
+    
+    local num = tonumber(numStr) or 0
+    local multipliers = {
+        K = 1e3,
+        M = 1e6,
+        B = 1e9
+    }
+    
+    local mult = multipliers[(suffix or ""):upper()] or 1
+    return num * mult
+end
+
+local function getESPInstance()
+    if getgenv().BestPetESP.espInstance and getgenv().BestPetESP.espInstance.Parent then
+        return getgenv().BestPetESP.espInstance
+    end
+
+    local bb = Instance.new("BillboardGui")
+    bb.Name = "OptimizedBestPetESP"
+    bb.Size = UDim2.new(0, 200, 0, 60)
+    bb.AlwaysOnTop = true
+    bb.StudsOffset = Vector3.new(0, -8, 0)
+    bb.Parent = CoreGui
+
+    local container = Instance.new("Frame", bb)
+    container.Size = UDim2.new(1, 0, 1, 0)
+    container.BackgroundTransparency = 1
+
+    local nameLabel = Instance.new("TextLabel", container)
+    nameLabel.Name = "PetName"
+    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameLabel.TextStrokeTransparency = 0
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    
+    local valueLabel = Instance.new("TextLabel", container)
+    valueLabel.Name = "PetValue"
+    valueLabel.Size = UDim2.new(1, 0, 0.5, 0)
+    valueLabel.Position = UDim2.new(0, 0, 0.5, 0)
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.TextScaled = true
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextColor3 = Color3.fromRGB(0, 255, 100)
+    valueLabel.TextStrokeTransparency = 0
+    valueLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+
+    getgenv().BestPetESP.espInstance = bb
+    return bb
+end
+
+local function updateESP(targetPart, displayName, valueText)
+    local esp = getESPInstance()
+    
+    if targetPart then
+        esp.Adornee = targetPart
+        esp.Enabled = true
+        
+        local container = esp:FindFirstChild("Frame")
+        if container then
+            container.PetName.Text = displayName
+            container.PetValue.Text = valueText
         end
-    end)
+    else
+        esp.Enabled = false
+        esp.Adornee = nil
+    end
 end
 
-local function wireChar(c)
-    for _, t in ipairs(c:GetChildren()) do stripToolPhysics(t) end
-    c.ChildAdded:Connect(stripToolPhysics)
-end
+local function scanForBestPet()
+    local debris = Workspace:FindFirstChild(CONFIG.TargetFolder)
+    if not debris then return end
 
--- Aplicar a personaje
-if LP.Character then wireChar(LP.Character) end
-LP.CharacterAdded:Connect(wireChar)
+    local bestPet = {
+        value = -1,
+        part = nil,
+        displayText = "None",
+        rawText = ""
+    }
 
--- ===== CARPET TP (CON SOPORTE PARA AMBOS) =====
-local _fhCarpetActiveTween = nil
-
-function _G._FH_CarpetTP(targetCF, speedOverride)
-    local chr = LP.Character
-    local hrp = chr and chr:FindFirstChild("HumanoidRootPart")
-    if not hrp or not targetCF then return end
-    if typeof(targetCF) == "Vector3" then targetCF = CFrame.new(targetCF) end
-
-    local dist = (hrp.Position - targetCF.Position).Magnitude
-    local dur = math.max(0.05, dist / (speedOverride or _G._FH_CarpetTP_Speed or 214))
-
-    local bp = LP:FindFirstChildOfClass("Backpack")
-    local flightItem = getFlightItem(chr, bp)
-    local hum = chr:FindFirstChildOfClass("Humanoid")
-
-    if flightItem and hum and flightItem.Parent ~= chr then
-        pcall(function() hum:EquipTool(flightItem) end)
-    end
-
-    if _fhCarpetActiveTween then
-        pcall(function() _fhCarpetActiveTween:Cancel() end)
-    end
-
-    local tw = TweenService:Create(hrp, TweenInfo.new(dur, Enum.EasingStyle.Linear), {CFrame = targetCF})
-    _fhCarpetActiveTween = tw
-    tw:Play()
-    return tw
-end
-
--- ===== FPS BOOST - LIGHTING =====
-pcall(function()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-    Lighting.Brightness = 0
-    Lighting.EnvironmentDiffuseScale = 0
-    Lighting.EnvironmentSpecularScale = 0
-    Lighting.Ambient = Color3.fromRGB(160, 160, 160)
-    Lighting.OutdoorAmbient = Color3.fromRGB(160, 160, 160)
-
-    for _, v in pairs(Lighting:GetChildren()) do
-        if v:IsA("PostEffect") or v:IsA("BlurEffect") or v:IsA("BloomEffect") or v:IsA("SunRaysEffect") then
-            pcall(function() v.Enabled = false end)
-        end
-    end
-end)
-
--- ===== LIMPIEZA DE TEXTURAS =====
-local function cleanSingleTool(tool)
-    if not tool or not tool:IsA("Tool") then return end
-    pcall(function()
-        local handle = tool:FindFirstChild("Handle")
-        if handle then
-            for _, obj in pairs(handle:GetDescendants()) do
-                if obj:IsA("Texture") or obj:IsA("Decal") then
-                    obj:Destroy()
-                elseif obj:IsA("SpecialMesh") or obj:IsA("MeshPart") then
-                    pcall(function() obj.TextureId = "" end)
+    local items = debris:GetChildren()
+    
+    for _, item in ipairs(items) do
+        if item.Name == CONFIG.TemplateName then
+            local surfaceGui = item:FindFirstChildOfClass("SurfaceGui")
+            
+            if surfaceGui and surfaceGui.Adornee then
+                -- Check for machine block
+                local animalData = item:FindFirstChild("AnimalData")
+                if animalData then
+                    local data = animalData:GetAttributes()
+                    if _VanishIsFusing(data) then
+                        -- Skip this pet if it's in a blocking machine
+                        continue
+                    end
+                end
+                
+                local genLabel = surfaceGui:FindFirstChild("Generation", true)
+                
+                if genLabel and genLabel:IsA("TextLabel") then
+                    local text = genLabel.Text
+                    local val = parseValue(text)
+                    
+                    if val > bestPet.value then
+                        local nameLabel = surfaceGui:FindFirstChild("DisplayName", true)
+                        
+                        bestPet.value = val
+                        bestPet.part = surfaceGui.Adornee
+                        bestPet.displayText = nameLabel and nameLabel.Text or "Unknown"
+                        bestPet.rawText = text
+                    end
                 end
             end
         end
-        for _, obj in pairs(tool:GetDescendants()) do
-            if obj:IsA("Texture") or obj:IsA("Decal") then
-                obj:Destroy()
-            elseif obj:IsA("SpecialMesh") or obj:IsA("MeshPart") then
-                pcall(function() obj.TextureId = "" end)
-            elseif obj:IsA("ParticleEmitter") then
-                obj:Destroy()
-            end
-        end
-    end)
-end
-
-local function cleanAllPlayerTools()
-    if not LP then return end
-    pcall(function()
-        if LP.Character then
-            for _, tool in pairs(LP.Character:GetChildren()) do
-                if tool:IsA("Tool") then cleanSingleTool(tool) end
-            end
-        end
-        local backpack = LP:FindFirstChild("Backpack")
-        if backpack then
-            for _, tool in pairs(backpack:GetChildren()) do
-                if tool:IsA("Tool") then cleanSingleTool(tool) end
-            end
-        end
-    end)
-end
-
--- ===== MONITOREO DE HERRAMIENTAS =====
-local function startToolMonitoring()
-    LP.CharacterAdded:Connect(function(character)
-        task.wait(0.3)
-        cleanAllPlayerTools()
-        character.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") then task.defer(function() cleanSingleTool(child) end) end
-        end)
-        character.DescendantAdded:Connect(function(desc)
-            if desc:IsA("Tool") or (desc:IsA("BasePart") and desc.Parent and desc.Parent:IsA("Tool")) then
-                local tool = desc:IsA("Tool") and desc or desc.Parent
-                task.defer(function() cleanSingleTool(tool) end)
-            end
-        end)
-    end)
-
-    local backpack = LP:FindFirstChild("Backpack")
-    if backpack then
-        backpack.ChildAdded:Connect(function(tool)
-            if tool:IsA("Tool") then task.defer(function() cleanSingleTool(tool) end) end
-        end)
     end
+
+    if bestPet.part then
+        updateESP(bestPet.part, bestPet.displayText, bestPet.rawText)
+    else
+        updateESP(nil, nil, nil)
+    end
+end
+
+local function startLoop()
+    if getgenv().BestPetESP.active then return end
+    getgenv().BestPetESP.active = true
+    
+    print("[ESP] Started Optimized Loop (Always Active)")
 
     task.spawn(function()
-        while task.wait(3) do
-            cleanAllPlayerTools()
+        while getgenv().BestPetESP.active do
+            local success, err = pcall(scanForBestPet)
+            if not success then
+                warn("[ESP Error]:", err)
+            end
+            task.wait(CONFIG.ScanInterval)
         end
     end)
 end
 
--- ===== OPTIMIZACIONES DE WORKSPACE =====
-local function disableAnimationsOnModel(model)
-    if Players:GetPlayerFromCharacter(model) then return end
-    pcall(function()
-        for _, v in pairs(model:GetDescendants()) do
-            if v:IsA("AnimationController") or v:IsA("Animator") then
-                v:Destroy()
-            elseif v:IsA("Humanoid") then
-                v:ChangeState(Enum.HumanoidStateType.Physics)
-            end
-        end
-    end)
+local function stopLoop()
+    getgenv().BestPetESP.active = false
+    updateESP(nil, nil, nil)
 end
 
-local function optimizeBrainrot(model)
-    if model.Name and string.lower(model.Name):find("brainrot") then
-        pcall(function()
-            for _, v in pairs(model:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.Material = Enum.Material.Plastic
-                    v.Reflectance = 0
-                end
-                if v:IsA("AnimationController") or v:IsA("Animator") then
-                    v:Destroy()
-                end
-                if v:IsA("Texture") or v:IsA("Decal") then
-                    v:Destroy()
-                end
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then
-                    v.Enabled = false
-                end
-            end
-        end)
-    end
-end
+-- Initialize ESP as always active
+startLoop()
 
-local function hideSpecialEvents(model)
-    if not model.Name then return end
-    local name = string.lower(model.Name)
-    if name:find("fire") or name:find("taco") or name:find("nyan") or name:find("event") then
-        pcall(function()
-            for _, v in pairs(model:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.Transparency = 1
-                end
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Sparkles") then
-                    v.Enabled = false
-                end
-                if v:IsA("Texture") or v:IsA("Decal") then
-                    v:Destroy()
-                end
-                if v:IsA("AnimationController") or v:IsA("Animator") then
-                    v:Destroy()
-                end
-            end
-        end)
-    end
-end
-
--- ===== APLICAR OPTIMIZACIONES A WORKSPACE =====
-task.spawn(function()
-    task.wait(0.5)
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("Model") then
-            disableAnimationsOnModel(obj)
-            optimizeBrainrot(obj)
-            hideSpecialEvents(obj)
-        end
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-            pcall(function() obj.Enabled = false end)
-        end
-        if obj:IsA("BasePart") and obj.Material ~= Enum.Material.Plastic then
-            pcall(function() obj.Material = Enum.Material.Plastic end)
-        end
-        if obj:IsA("Texture") or obj:IsA("Decal") then
-            pcall(function() obj:Destroy() end)
-        end
-    end
-end)
-
--- ===== EVENTOS PARA OBJETOS NUEVOS =====
-workspace.DescendantAdded:Connect(function(obj)
-    if obj:IsA("Model") then
-        disableAnimationsOnModel(obj)
-        optimizeBrainrot(obj)
-        hideSpecialEvents(obj)
-    end
-    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-        pcall(function() obj.Enabled = false end)
-    end
-    if obj:IsA("BasePart") then
-        pcall(function() obj.Material = Enum.Material.Plastic end)
-    end
-    if obj:IsA("Texture") or obj:IsA("Decal") then
-        pcall(function() obj:Destroy() end)
-    end
-end)
-
--- ===== INICIAR MONITOREOS =====
-startToolMonitoring()
-cleanAllPlayerTools()
-
--- ===== CALIDAD DE RENDER =====
-task.spawn(function()
-    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-    pcall(function()
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 1e9
-        Lighting.Brightness = 1
-    end)
-end)
+print("[ESP] Best Pet ESP Loaded - Always Active")
+print("[ESP] Blocked machine types: Fuse, Duel, Trade, Crafting")
