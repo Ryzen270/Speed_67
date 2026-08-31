@@ -15,178 +15,10 @@ local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
 local Player = Players.LocalPlayer
 
--- =====================================================================
--- INTRO XENHUB
--- =====================================================================
-local function showIntro()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "XenHubIntro"
-    screenGui.ResetOnSpawn = false
-    screenGui.DisplayOrder = 9999
-    screenGui.IgnoreGuiInset = true
-    screenGui.Parent = Player:WaitForChild("PlayerGui")
-
-    local background = Instance.new("Frame")
-    background.Size = UDim2.new(1, 0, 1, 0)
-    background.BackgroundColor3 = Color3.fromRGB(5, 5, 15)
-    background.BackgroundTransparency = 1
-    background.Parent = screenGui
-
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(5, 5, 20)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(8, 8, 40)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 8, 50))
-    })
-    gradient.Rotation = 90
-    gradient.Parent = background
-
-    local particles = {}
-    for i = 1, 30 do
-        local p = Instance.new("Frame")
-        p.Size = UDim2.new(0, math.random(1, 3), 0, math.random(1, 3))
-        p.Position = UDim2.new(math.random(), 0, math.random(), 0)
-        p.BackgroundColor3 = Color3.fromRGB(
-            math.random(80, 180),
-            math.random(80, 200),
-            math.random(150, 255)
-        )
-        p.BackgroundTransparency = 1
-        p.BorderSizePixel = 0
-        p.ZIndex = 2
-
-        local pCorner = Instance.new("UICorner")
-        pCorner.CornerRadius = UDim.new(1, 0)
-        pCorner.Parent = p
-
-        p.Parent = screenGui
-        particles[i] = {
-            frame = p,
-            speed = 0.1 + math.random() * 0.3,
-            startX = p.Position.X.Scale,
-            startY = p.Position.Y.Scale
-        }
-    end
-
-    local image = Instance.new("ImageLabel")
-    image.Size = UDim2.new(0, 320, 0, 320)
-    image.Position = UDim2.new(0.5, -160, 0.35, -160)
-    image.BackgroundTransparency = 1
-    image.Image = "rbxassetid://99290994083494"
-    image.ImageTransparency = 1
-    image.ScaleType = Enum.ScaleType.Fit
-    image.Parent = screenGui
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 20)
-    corner.Parent = image
-
-    local glow = Instance.new("ImageLabel")
-    glow.Size = UDim2.new(0, 380, 0, 380)
-    glow.Position = UDim2.new(0.5, -190, 0.35, -190)
-    glow.BackgroundTransparency = 1
-    glow.Image = "rbxassetid://5737292846"
-    glow.ImageColor3 = Color3.fromRGB(30, 100, 255)
-    glow.ImageTransparency = 0.8
-    glow.ScaleType = Enum.ScaleType.Fit
-    glow.Parent = screenGui
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 55)
-    title.Position = UDim2.new(0, 0, 0.72, 0)
-    title.BackgroundTransparency = 1
-    title.Text = "XENHUB"
-    title.TextColor3 = Color3.fromRGB(150, 180, 255)
-    title.Font = Enum.Font.GothamBlack
-    title.TextSize = 48
-    title.TextTransparency = 1
-    title.TextStrokeTransparency = 1
-    title.TextStrokeColor3 = Color3.fromRGB(20, 60, 200)
-    title.Parent = screenGui
-
-    local subtitle = Instance.new("TextLabel")
-    subtitle.Size = UDim2.new(1, 0, 0, 22)
-    subtitle.Position = UDim2.new(0, 0, 0.83, 0)
-    subtitle.BackgroundTransparency = 1
-    subtitle.Text = "by KWP"
-    subtitle.TextColor3 = Color3.fromRGB(100, 130, 200)
-    subtitle.Font = Enum.Font.GothamMedium
-    subtitle.TextSize = 15
-    subtitle.TextTransparency = 1
-    subtitle.Parent = screenGui
-
-    task.spawn(function()
-        while screenGui and screenGui.Parent do
-            for _, p in ipairs(particles) do
-                pcall(function()
-                    local newY = p.startY - 0.0003 * p.speed
-                    if newY < -0.05 then newY = 1.05 end
-                    p.frame.Position = UDim2.new(
-                        p.startX + math.sin(tick() * p.speed) * 0.01,
-                        0,
-                        newY,
-                        0
-                    )
-                end)
-            end
-            task.wait(0.03)
-        end
-    end)
-
-    TweenService:Create(background, TweenInfo.new(0.6), {BackgroundTransparency = 0}):Play()
-
-    for _, p in ipairs(particles) do
-        task.delay(math.random() * 0.4, function()
-            TweenService:Create(p.frame, TweenInfo.new(0.8), {BackgroundTransparency = 0.2 + math.random() * 0.3}):Play()
-        end)
-    end
-
-    task.wait(0.2)
-    TweenService:Create(glow, TweenInfo.new(0.8), {ImageTransparency = 0.4}):Play()
-
-    task.wait(0.3)
-    TweenService:Create(image, TweenInfo.new(0.9, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        ImageTransparency = 0,
-        Rotation = 2
-    }):Play()
-
-    task.wait(0.5)
-    TweenService:Create(title, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        TextTransparency = 0,
-        TextStrokeTransparency = 0.2
-    }):Play()
-
-    task.wait(0.3)
-    TweenService:Create(subtitle, TweenInfo.new(0.5), {TextTransparency = 0}):Play()
-
-    task.delay(4.5, function()
-        TweenService:Create(background, TweenInfo.new(0.6), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(image, TweenInfo.new(0.6), {
-            ImageTransparency = 1,
-            Rotation = 8
-        }):Play()
-        TweenService:Create(glow, TweenInfo.new(0.6), {ImageTransparency = 1}):Play()
-        TweenService:Create(title, TweenInfo.new(0.5), {
-            TextTransparency = 1,
-            TextStrokeTransparency = 1
-        }):Play()
-        TweenService:Create(subtitle, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
-
-        for _, p in ipairs(particles) do
-            TweenService:Create(p.frame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-        end
-
-        task.wait(0.7)
-        if screenGui then screenGui:Destroy() end
-    end)
-
-    print("========================================")
-    print("XENHUB - LOADED")
-    print("by KWP")
-    print("========================================")
-end
-
-showIntro()
+print("========================================")
+print("XENHUB - LOADED")
+print("by KWP")
+print("========================================")
 
 -- =====================================================================
 -- PART 1: BEST PET ESP
@@ -254,7 +86,7 @@ local function getESPInstance()
     nameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
     nameLabel.TextStrokeTransparency = 0
     nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-    
+
     local valueLabel = Instance.new("TextLabel", container)
     valueLabel.Name = "PetValue"
     valueLabel.Size = UDim2.new(1, 0, 0.5, 0)
@@ -292,7 +124,7 @@ local function scanForBestPet()
 
     local bestPet = { value = -1, part = nil, displayText = "None", rawText = "" }
     local items = debris:GetChildren()
-    
+
     for _, item in ipairs(items) do
         if item.Name == ESP_CONFIG.TemplateName then
             local surfaceGui = item:FindFirstChildOfClass("SurfaceGui")
@@ -302,7 +134,7 @@ local function scanForBestPet()
                     local data = animalData:GetAttributes()
                     if _VanishIsFusing(data) then continue end
                 end
-                
+
                 local genLabel = surfaceGui:FindFirstChild("Generation", true)
                 if genLabel and genLabel:IsA("TextLabel") then
                     local text = genLabel.Text
@@ -951,8 +783,7 @@ infoLabel.Font = Enum.Font.GothamBold
 infoLabel.TextSize = 11 * guiScale
 infoLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- =====================================================================
--- PROGRESS BAR
+-- =====================================================================-- PROGRESS BAR
 -- =====================================================================
 
 local progressContainer = Instance.new("Frame", sg)
