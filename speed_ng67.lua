@@ -1,5 +1,5 @@
 -- =====================================================================
--- XENHUB - BEST PET ESP + SPEED BYPASS + FPS BOOST + AUTO STEAL
+-- XENHUB - SPEED BYPASS + FPS BOOST + AUTO STEAL
 -- by KWP
 -- =====================================================================
 
@@ -21,159 +21,7 @@ print("by KWP")
 print("========================================")
 
 -- =====================================================================
--- PART 1: BEST PET ESP
--- =====================================================================
-
-getgenv().BestPetESP = getgenv().BestPetESP or {
-    active = false,
-    connection = nil,
-    espInstance = nil
-}
-
-local ESP_CONFIG = {
-    ScanInterval = 0.5,
-    TargetFolder = "Debris",
-    TemplateName = "FastOverheadTemplate"
-}
-
-local _BLOCKING_MACHINE_TYPES = {
-    Fuse = true,
-    Duel = true,
-    Trade = true,
-    Crafting = true,
-}
-
-local function _VanishIsFusing(animalData)
-    if type(animalData) ~= "table" then return false end
-    local m = animalData.Machine
-    if type(m) ~= "table" then return false end
-    return _BLOCKING_MACHINE_TYPES[m.Type] == true
-end
-
-local function parseValue(text)
-    if not text then return 0 end
-    text = tostring(text):gsub("%s", ""):gsub("/s", "")
-    local numStr, suffix = text:match("([%d%.]+)([KkMmBbTtQq]?)")
-    if not numStr then return 0 end
-    local num = tonumber(numStr) or 0
-    local multipliers = { K = 1e3, M = 1e6, B = 1e9 }
-    local mult = multipliers[(suffix or ""):upper()] or 1
-    return num * mult
-end
-
-local function getESPInstance()
-    if getgenv().BestPetESP.espInstance and getgenv().BestPetESP.espInstance.Parent then
-        return getgenv().BestPetESP.espInstance
-    end
-
-    local bb = Instance.new("BillboardGui")
-    bb.Name = "OptimizedBestPetESP"
-    bb.Size = UDim2.new(0, 200, 0, 60)
-    bb.AlwaysOnTop = true
-    bb.StudsOffset = Vector3.new(0, -8, 0)
-    bb.Parent = CoreGui
-
-    local container = Instance.new("Frame", bb)
-    container.Size = UDim2.new(1, 0, 1, 0)
-    container.BackgroundTransparency = 1
-
-    local nameLabel = Instance.new("TextLabel", container)
-    nameLabel.Name = "PetName"
-    nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextScaled = true
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
-    nameLabel.TextStrokeTransparency = 0
-    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-
-    local valueLabel = Instance.new("TextLabel", container)
-    valueLabel.Name = "PetValue"
-    valueLabel.Size = UDim2.new(1, 0, 0.5, 0)
-    valueLabel.Position = UDim2.new(0, 0, 0.5, 0)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.TextScaled = true
-    valueLabel.Font = Enum.Font.GothamBold
-    valueLabel.TextColor3 = Color3.fromRGB(0, 255, 200)
-    valueLabel.TextStrokeTransparency = 0
-    valueLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-
-    getgenv().BestPetESP.espInstance = bb
-    return bb
-end
-
-local function updateESP(targetPart, displayName, valueText)
-    local esp = getESPInstance()
-    if targetPart then
-        esp.Adornee = targetPart
-        esp.Enabled = true
-        local container = esp:FindFirstChild("Frame")
-        if container then
-            container.PetName.Text = displayName
-            container.PetValue.Text = valueText
-        end
-    else
-        esp.Enabled = false
-        esp.Adornee = nil
-    end
-end
-
-local function scanForBestPet()
-    local debris = Workspace:FindFirstChild(ESP_CONFIG.TargetFolder)
-    if not debris then return end
-
-    local bestPet = { value = -1, part = nil, displayText = "None", rawText = "" }
-    local items = debris:GetChildren()
-
-    for _, item in ipairs(items) do
-        if item.Name == ESP_CONFIG.TemplateName then
-            local surfaceGui = item:FindFirstChildOfClass("SurfaceGui")
-            if surfaceGui and surfaceGui.Adornee then
-                local animalData = item:FindFirstChild("AnimalData")
-                if animalData then
-                    local data = animalData:GetAttributes()
-                    if _VanishIsFusing(data) then continue end
-                end
-
-                local genLabel = surfaceGui:FindFirstChild("Generation", true)
-                if genLabel and genLabel:IsA("TextLabel") then
-                    local text = genLabel.Text
-                    local val = parseValue(text)
-                    if val > bestPet.value then
-                        local nameLabel = surfaceGui:FindFirstChild("DisplayName", true)
-                        bestPet.value = val
-                        bestPet.part = surfaceGui.Adornee
-                        bestPet.displayText = nameLabel and nameLabel.Text or "Unknown"
-                        bestPet.rawText = text
-                    end
-                end
-            end
-        end
-    end
-
-    if bestPet.part then
-        updateESP(bestPet.part, bestPet.displayText, bestPet.rawText)
-    else
-        updateESP(nil, nil, nil)
-    end
-end
-
-local function startESPLoop()
-    if getgenv().BestPetESP.active then return end
-    getgenv().BestPetESP.active = true
-    task.spawn(function()
-        while getgenv().BestPetESP.active do
-            local success, err = pcall(scanForBestPet)
-            if not success then warn("[ESP Error]:", err) end
-            task.wait(ESP_CONFIG.ScanInterval)
-        end
-    end)
-end
-
-startESPLoop()
-
--- =====================================================================
--- PART 2: SPEED BYPASS
+-- PART 1: SPEED BYPASS
 -- =====================================================================
 
 local speedEnabled = false
@@ -255,7 +103,7 @@ speedFrame.InputBegan:Connect(function(input)
 end)
 
 -- =====================================================================
--- PART 3: FPS BOOST
+-- PART 2: FPS BOOST
 -- =====================================================================
 
 _G._FH_CarpetTP_Speed = _G._FH_CarpetTP_Speed or 214
@@ -466,7 +314,7 @@ task.spawn(function()
 end)
 
 -- =====================================================================
--- PART 4: AUTO STEAL
+-- PART 3: AUTO STEAL
 -- =====================================================================
 
 local Config = {
@@ -629,7 +477,7 @@ local function startFPS()
 end
 
 -- =====================================================================
--- PART 5: GUI - Red/Black Style
+-- PART 4: GUI - Red/Black Style
 -- =====================================================================
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -783,7 +631,8 @@ infoLabel.Font = Enum.Font.GothamBold
 infoLabel.TextSize = 11 * guiScale
 infoLabel.TextXAlignment = Enum.TextXAlignment.Center
 
--- =====================================================================-- PROGRESS BAR
+-- =====================================================================
+-- PROGRESS BAR
 -- =====================================================================
 
 local progressContainer = Instance.new("Frame", sg)
