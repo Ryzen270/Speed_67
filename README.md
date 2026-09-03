@@ -23,9 +23,4 @@ Los recursos que compartimos deben usarse de forma ética y legal. Si trabajas c
 ## Créditos
 
 Creado por Waw (Santos) & Nataly.
-
 ---
-
-_Imagen: dominio público (CC0). Archivo obtenido de Wikimedia Commons._
-
-_Documento actualizado por GitHub Copilot Chat Assistant a petición del autor del repositorio._
