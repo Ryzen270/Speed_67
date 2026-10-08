@@ -1,6 +1,6 @@
 -- =====================================================================
--- XENHUB - SPEED BYPASS + FPS BOOST + AUTO STEAL
--- by KWP
+-- XENHUB - SPEED + FPS BOOST + AUTO STEAL + INF JUMP + AKA X-RAY + ANTI-RAGDOLL
+-- by KWP | INF JUMP by @rznnq | AKA X-RAY + ANTI-RAGDOLL integrados
 -- =====================================================================
 
 repeat task.wait() until game:IsLoaded()
@@ -103,11 +103,192 @@ speedFrame.InputBegan:Connect(function(input)
 end)
 
 -- =====================================================================
--- PART 2: FPS BOOST
+-- PART 2: FPS BOOST PRO (sin tocar cámara)
 -- =====================================================================
 
 _G._FH_CarpetTP_Speed = _G._FH_CarpetTP_Speed or 214
 _G._FH_AlwaysOnFPS = true
+
+pcall(function()
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 9e9
+    Lighting.Brightness = 1
+    Lighting.EnvironmentDiffuseScale = 0
+    Lighting.EnvironmentSpecularScale = 0
+    Lighting.Ambient = Color3.fromRGB(180, 180, 180)
+    Lighting.OutdoorAmbient = Color3.fromRGB(180, 180, 180)
+    Lighting.ClockTime = 14
+    Lighting.GeographicLatitude = 0
+    Lighting.ExposureCompensation = 0
+    for _, v in pairs(Lighting:GetChildren()) do
+        if v:IsA("PostEffect") or v:IsA("BlurEffect") or v:IsA("BloomEffect") 
+           or v:IsA("SunRaysEffect") or v:IsA("ColorCorrectionEffect") 
+           or v:IsA("DepthOfFieldEffect") then
+            pcall(function() v.Enabled = false end)
+        end
+    end
+end)
+
+Lighting.DescendantAdded:Connect(function(obj)
+    if obj:IsA("PostEffect") or obj:IsA("BlurEffect") or obj:IsA("BloomEffect")
+       or obj:IsA("SunRaysEffect") or obj:IsA("DepthOfFieldEffect") then
+        pcall(function() obj.Enabled = false end)
+    end
+end)
+
+pcall(function()
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+end)
+
+local function stripMeshTextures(inst)
+    if inst:IsA("MeshPart") then
+        pcall(function() inst.TextureID = "" end)
+    elseif inst:IsA("SpecialMesh") then
+        pcall(function() inst.TextureId = "" end)
+    elseif inst:IsA("SurfaceAppearance") then
+        pcall(function() inst:Destroy() end)
+    end
+end
+
+local function stripHeavyVisuals(inst)
+    pcall(function()
+        if inst:IsA("Highlight") or inst:IsA("Beam") or inst:IsA("SelectionBox") 
+           or inst:IsA("SelectionSphere") then
+            inst.Enabled = false
+        end
+        if inst:IsA("BillboardGui") then
+            if inst.Parent and not Players:GetPlayerFromCharacter(inst.Parent) then
+                inst.Enabled = false
+            end
+        end
+        if inst:IsA("PointLight") or inst:IsA("SpotLight") or inst:IsA("SurfaceLight") then
+            inst.Enabled = false
+        end
+    end)
+end
+
+local function killParticles(inst)
+    if inst:IsA("ParticleEmitter") or inst:IsA("Trail") or inst:IsA("Smoke") 
+       or inst:IsA("Fire") or inst:IsA("Sparkles") then
+        pcall(function() inst.Enabled = false end)
+    end
+end
+
+local function applyPartPerf(inst)
+    if inst:IsA("BasePart") then
+        pcall(function()
+            inst.CastShadow = false
+            inst.Material = Enum.Material.Plastic
+            inst.Reflectance = 0
+        end)
+    end
+end
+
+-- =====================================================================
+-- PART 3: BRAINROT / HAUNTED FUSE OPTIMIZATION
+-- =====================================================================
+
+local function optimizeBrainrot(model)
+    if not model.Name then return end
+    local lname = string.lower(model.Name)
+    if lname:find("brainrot") or lname:find("brainrots") then
+        pcall(function()
+            for _, v in pairs(model:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.Material = Enum.Material.Plastic
+                    v.Reflectance = 0
+                end
+                if v:IsA("MeshPart") then
+                    pcall(function() v.TextureID = "" end)
+                    v.Material = Enum.Material.Plastic
+                    v.Reflectance = 0
+                end
+                if v:IsA("Decal") or v:IsA("Texture") or v:IsA("SurfaceAppearance") then
+                    v:Destroy()
+                end
+                if v:IsA("AnimationController") or v:IsA("Animator") then
+                    v:Destroy()
+                end
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") 
+                   or v:IsA("Sparkles") or v:IsA("Fire") then
+                    v.Enabled = false
+                end
+                if v:IsA("Highlight") or v:IsA("SelectionBox") or v:IsA("Beam") then
+                    v.Enabled = false
+                end
+                if v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+                    v.Enabled = false
+                end
+            end
+        end)
+    end
+end
+
+local function removeHauntedFuse(model)
+    if not model.Name then return end
+    local lname = string.lower(model.Name)
+    if lname:find("haunted") or lname:find("fuse") then
+        pcall(function()
+            for _, v in pairs(model:GetDescendants()) do
+                if v:IsA("BasePart") or v:IsA("MeshPart") then
+                    v.Transparency = 1
+                    v.CanCollide = false
+                    v.CanTouch = false
+                    v.CanQuery = false
+                    v.Material = Enum.Material.Plastic
+                    v.Reflectance = 0
+                end
+                if v:IsA("Decal") or v:IsA("Texture") or v:IsA("SurfaceAppearance") then
+                    v:Destroy()
+                end
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") 
+                   or v:IsA("Sparkles") or v:IsA("Fire") then
+                    v.Enabled = false
+                end
+                if v:IsA("Highlight") or v:IsA("SelectionBox") or v:IsA("Beam") then
+                    v.Enabled = false
+                end
+                if v:IsA("AnimationController") or v:IsA("Animator") then
+                    v:Destroy()
+                end
+                if v:IsA("Sound") or v:IsA("SoundGroup") then
+                    pcall(function() v.Volume = 0; v:Stop() end)
+                end
+                if v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then
+                    v.Enabled = false
+                end
+            end
+        end)
+    end
+end
+
+local function hideSpecialEvents(model)
+    if not model.Name then return end
+    local name = string.lower(model.Name)
+    if name:find("fire") or name:find("taco") or name:find("nyan") or name:find("event") 
+        or name:find("haunted") or name:find("fuse") then
+        pcall(function()
+            for _, v in pairs(model:GetDescendants()) do
+                if v:IsA("BasePart") then 
+                    v.Transparency = 1
+                    v.Reflectance = 0
+                    v.Material = Enum.Material.Plastic
+                    v.CanCollide = false
+                end
+                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") 
+                   or v:IsA("Sparkles") or v:IsA("Fire") then v.Enabled = false end
+                if v:IsA("Decal") or v:IsA("Texture") or v:IsA("SurfaceAppearance") then v:Destroy() end
+                if v:IsA("AnimationController") or v:IsA("Animator") then v:Destroy() end
+                if v:IsA("Highlight") or v:IsA("Beam") or v:IsA("SelectionBox") then v.Enabled = false end
+                if v:IsA("PointLight") or v:IsA("SpotLight") or v:IsA("SurfaceLight") then v.Enabled = false end
+            end
+        end)
+    end
+end
+
+-- =====================================================================
+-- PART 4: TOOL / CHARACTER CLEANUP
+-- =====================================================================
 
 local function stripToolPhysics(tool)
     if not tool or not tool:IsA("Tool") then return end
@@ -117,8 +298,9 @@ local function stripToolPhysics(tool)
                 d.Massless = true
                 d.CanCollide = false
             end)
-        elseif d:IsA("BodyVelocity") or d:IsA("BodyPosition") or d:IsA("BodyGyro") or d:IsA("AlignPosition") 
-            or d:IsA("AlignOrientation") or d:IsA("VectorForce") or d:IsA("LinearVelocity") or d:IsA("AngularVelocity") then
+        elseif d:IsA("BodyVelocity") or d:IsA("BodyPosition") or d:IsA("BodyGyro") 
+            or d:IsA("AlignPosition") or d:IsA("AlignOrientation") or d:IsA("VectorForce") 
+            or d:IsA("LinearVelocity") or d:IsA("AngularVelocity") then
             pcall(function() d.Enabled = false end)
         end
     end
@@ -157,35 +339,35 @@ function _G._FH_CarpetTP(targetCF, speedOverride)
     return tw
 end
 
-pcall(function()
-    Lighting.GlobalShadows = false
-    Lighting.FogEnd = 9e9
-    Lighting.Brightness = 0
-    Lighting.EnvironmentDiffuseScale = 0
-    Lighting.EnvironmentSpecularScale = 0
-    Lighting.Ambient = Color3.fromRGB(160, 160, 160)
-    Lighting.OutdoorAmbient = Color3.fromRGB(160, 160, 160)
-    for _, v in pairs(Lighting:GetChildren()) do
-        if v:IsA("PostEffect") or v:IsA("BlurEffect") or v:IsA("BloomEffect") or v:IsA("SunRaysEffect") then
-            pcall(function() v.Enabled = false end)
-        end
-    end
-end)
-
 local function cleanSingleTool(tool)
     if not tool or not tool:IsA("Tool") then return end
     pcall(function()
         local handle = tool:FindFirstChild("Handle")
         if handle then
             for _, obj in pairs(handle:GetDescendants()) do
-                if obj:IsA("Texture") or obj:IsA("Decal") then obj:Destroy()
-                elseif obj:IsA("SpecialMesh") or obj:IsA("MeshPart") then pcall(function() obj.TextureId = "" end) end
+                if obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("SurfaceAppearance") then 
+                    obj:Destroy()
+                elseif obj:IsA("SpecialMesh") or obj:IsA("MeshPart") then 
+                    pcall(function() obj.TextureId = ""; obj.TextureID = "" end) 
+                elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") 
+                    or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                    obj.Enabled = false
+                elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+                    obj.Enabled = false
+                end
             end
         end
         for _, obj in pairs(tool:GetDescendants()) do
-            if obj:IsA("Texture") or obj:IsA("Decal") then obj:Destroy()
-            elseif obj:IsA("SpecialMesh") or obj:IsA("MeshPart") then pcall(function() obj.TextureId = "" end)
-            elseif obj:IsA("ParticleEmitter") then obj:Destroy() end
+            if obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("SurfaceAppearance") then 
+                obj:Destroy()
+            elseif obj:IsA("SpecialMesh") or obj:IsA("MeshPart") then 
+                pcall(function() obj.TextureId = ""; obj.TextureID = "" end)
+            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") 
+                or obj:IsA("Fire") or obj:IsA("Sparkles") then
+                obj.Enabled = false
+            elseif obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+                obj.Enabled = false
+            end
         end
     end)
 end
@@ -232,6 +414,51 @@ local function startToolMonitoring()
     end)
 end
 
+-- =====================================================================
+-- PART 5: HIDE PLAYER ANIMATIONS (visualmente)
+-- =====================================================================
+
+local function hidePlayerAnimations(character)
+    if not character or character == Player.Character then return end
+    if not Players:GetPlayerFromCharacter(character) then return end
+    
+    task.spawn(function()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            local animator = humanoid:FindFirstChildOfClass("Animator")
+            if animator then
+                pcall(function()
+                    for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                        track:Stop(0)
+                    end
+                end)
+                animator.AnimationPlayed:Connect(function(track)
+                    pcall(function() track:Stop(0) end)
+                end)
+            end
+        end
+        
+        for _, v in ipairs(character:GetDescendants()) do
+            if v:IsA("AnimationController") then
+                for _, anim in ipairs(v:GetPlayingAnimationTracks()) do
+                    pcall(function() anim:Stop(0) end)
+                end
+            end
+        end
+    end)
+end
+
+local function hookPlayerAnimations(plr)
+    if plr == Player then return end
+    if plr.Character then hidePlayerAnimations(plr.Character) end
+    plr.CharacterAdded:Connect(hidePlayerAnimations)
+end
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    hookPlayerAnimations(plr)
+end
+Players.PlayerAdded:Connect(hookPlayerAnimations)
+
 local function disableAnimationsOnModel(model)
     if Players:GetPlayerFromCharacter(model) then return end
     pcall(function()
@@ -242,33 +469,288 @@ local function disableAnimationsOnModel(model)
     end)
 end
 
-local function optimizeBrainrot(model)
-    if model.Name and string.lower(model.Name):find("brainrot") then
-        pcall(function()
-            for _, v in pairs(model:GetDescendants()) do
-                if v:IsA("BasePart") then v.Material = Enum.Material.Plastic; v.Reflectance = 0 end
-                if v:IsA("AnimationController") or v:IsA("Animator") then v:Destroy() end
-                if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") then v.Enabled = false end
+-- =====================================================================
+-- PART 5.5: AKA X-RAY (otros jugadores semi-transparentes)
+-- =====================================================================
+
+local akaXrayEnabled = false
+local akaXrayConnections = {}
+local akaXrayOriginal = {}
+
+local function applyAKAXrayToCharacter(character)
+    if not character or character == Player.Character then return end
+    if not Players:GetPlayerFromCharacter(character) then return end
+    task.spawn(function()
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                if not akaXrayOriginal[part] then
+                    akaXrayOriginal[part] = part.LocalTransparencyModifier
+                end
+                pcall(function()
+                    part.LocalTransparencyModifier = 0.85
+                end)
+            end
+        end
+        local conn = character.DescendantAdded:Connect(function(d)
+            if not akaXrayEnabled then return end
+            if d:IsA("BasePart") and d.Name ~= "HumanoidRootPart" then
+                if not akaXrayOriginal[d] then
+                    akaXrayOriginal[d] = d.LocalTransparencyModifier
+                end
+                pcall(function()
+                    d.LocalTransparencyModifier = 0.85
+                end)
             end
         end)
+        table.insert(akaXrayConnections, conn)
+    end)
+end
+
+local function removeAKAXrayFromCharacter(character)
+    if not character then return end
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            pcall(function()
+                part.LocalTransparencyModifier = akaXrayOriginal[part] or 0
+            end)
+            akaXrayOriginal[part] = nil
+        end
     end
 end
 
-local function hideSpecialEvents(model)
-    if not model.Name then return end
-    local name = string.lower(model.Name)
-    if name:find("fire") or name:find("taco") or name:find("nyan") or name:find("event") then
-        pcall(function()
-            for _, v in pairs(model:GetDescendants()) do
-                if v:IsA("BasePart") then v.Transparency = 1 end
-                if v:IsA("ParticleEmitter") or v:IsA("Trail") or v:IsA("Smoke") or v:IsA("Sparkles") then v.Enabled = false end
-                if v:IsA("Texture") or v:IsA("Decal") then v:Destroy() end
-                if v:IsA("AnimationController") or v:IsA("Animator") then v:Destroy() end
+local function enableAKAXray()
+    akaXrayEnabled = true
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= Player and plr.Character then
+            applyAKAXrayToCharacter(plr.Character)
+        end
+    end
+    local conn1 = Players.PlayerAdded:Connect(function(plr)
+        if not akaXrayEnabled then return end
+        plr.CharacterAdded:Connect(function(c)
+            if akaXrayEnabled then
+                task.wait(0.3)
+                applyAKAXrayToCharacter(c)
             end
         end)
+    end)
+    table.insert(akaXrayConnections, conn1)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= Player then
+            local conn2 = plr.CharacterAdded:Connect(function(c)
+                if akaXrayEnabled then
+                    task.wait(0.3)
+                    applyAKAXrayToCharacter(c)
+                end
+            end)
+            table.insert(akaXrayConnections, conn2)
+        end
     end
 end
+
+local function disableAKAXray()
+    akaXrayEnabled = false
+    for _, conn in ipairs(akaXrayConnections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    akaXrayConnections = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= Player and plr.Character then
+            removeAKAXrayFromCharacter(plr.Character)
+        end
+    end
+    akaXrayOriginal = {}
+end
+
+-- =====================================================================
+-- PART 5.6: ANTI-RAGDOLL ESTILO REP (auto-recuperación + limpieza)
+-- =====================================================================
+
+local antiRagdollEnabled = true
+local antiRagdollConnections = {}
+local antiRagdollLoopConn = nil
+
+local function isRagdolled(hum)
+    if not hum then return false end
+    local state = hum:GetState()
+    return state == Enum.HumanoidStateType.Physics
+        or state == Enum.HumanoidStateType.Ragdoll
+        or state == Enum.HumanoidStateType.FallingDown
+end
+
+-- Limpia constraints y BallSockets que causan ragdoll
+local function cleanRagdollConstraints(char)
+    if not char then return end
+    for _, d in ipairs(char:GetDescendants()) do
+        if d:IsA("BallSocketConstraint") 
+           or d:IsA("NoCollisionConstraint")
+           or d:IsA("HingeConstraint") then
+            pcall(function() d:Destroy() end)
+        elseif d:IsA("Attachment") and (d.Name == "A" or d.Name == "B") then
+            pcall(function() d:Destroy() end)
+        end
+    end
+    -- Reactivar Motor6D
+    for _, d in ipairs(char:GetDescendants()) do
+        if d:IsA("Motor6D") and not d.Enabled then
+            pcall(function() d.Enabled = true end)
+        end
+    end
+end
+
+-- Fuerza el Humanoid a Running y rehabilita controles
+local function recoverFromRagdoll(char, hum, hrp)
+    if not char or not hum or not hrp then return end
+    pcall(function()
+        hum:ChangeState(Enum.HumanoidStateType.Running)
+    end)
+    pcall(function()
+        hrp.AssemblyLinearVelocity = Vector3.zero
+        hrp.AssemblyAngularVelocity = Vector3.zero
+    end)
+    pcall(function()
+        if Workspace.CurrentCamera and Workspace.CurrentCamera.CameraSubject ~= hum then
+            Workspace.CurrentCamera.CameraSubject = hum
+        end
+    end)
+    -- Reactivar controles del PlayerModule
+    task.defer(function()
+        pcall(function()
+            local ps = Player:FindFirstChild("PlayerScripts")
+            local pm = ps and ps:FindFirstChild("PlayerModule")
+            if pm then
+                local controls = require(pm):GetControls()
+                if controls then controls:Enable() end
+            end
+        end)
+    end)
+    cleanRagdollConstraints(char)
+end
+
+-- Hook de CharacterAdded para monitorear el nuevo personaje
+local function hookAntiRagdoll(char)
+    if not char then return end
+    -- Desconectar los anteriores
+    for _, c in ipairs(antiRagdollConnections) do
+        pcall(function() c:Disconnect() end)
+    end
+    antiRagdollConnections = {}
+
+    local hum = char:WaitForChild("Humanoid", 10)
+    local hrp = char:WaitForChild("HumanoidRootPart", 10)
+    if not hum or not hrp then return end
+
+    -- 1. Escuchar cambios de estado del Humanoid (V1)
+    local c1 = hum.StateChanged:Connect(function()
+        if not antiRagdollEnabled then return end
+        if isRagdolled(hum) then
+            recoverFromRagdoll(char, hum, hrp)
+        end
+    end)
+    table.insert(antiRagdollConnections, c1)
+
+    -- 2. Detectar cuando entran constraints nuevos (V2)
+    local c2 = char.DescendantAdded:Connect(function(desc)
+        if not antiRagdollEnabled then return end
+        if desc:IsA("BallSocketConstraint") 
+           or desc:IsA("NoCollisionConstraint")
+           or desc:IsA("HingeConstraint")
+           or (desc:IsA("Attachment") and (desc.Name == "A" or desc.Name == "B")) then
+            task.defer(function()
+                if char and char.Parent then
+                    cleanRagdollConstraints(char)
+                    if isRagdolled(hum) then
+                        recoverFromRagdoll(char, hum, hrp)
+                    end
+                end
+            end)
+        end
+    end)
+    table.insert(antiRagdollConnections, c2)
+
+    -- 3. Hook del RemoteEvent ApplyImpulse (empujones)
+    pcall(function()
+        local pkg = game:GetService("ReplicatedStorage"):FindFirstChild("Packages")
+        if not pkg then return end
+        local net = pkg:FindFirstChild("Net")
+        if not net then return end
+        local applyImp = net:FindFirstChild("RE/CombatService/ApplyImpulse")
+        if applyImp and applyImp:IsA("RemoteEvent") then
+            local c3 = applyImp.OnClientEvent:Connect(function()
+                if not antiRagdollEnabled then return end
+                task.defer(function()
+                    if hrp and hrp.Parent then
+                        pcall(function() hrp.AssemblyLinearVelocity = Vector3.zero end)
+                    end
+                    if isRagdolled(hum) then
+                        recoverFromRagdoll(char, hum, hrp)
+                    end
+                end)
+            end)
+            table.insert(antiRagdollConnections, c3)
+        end
+    end)
+
+    -- Limpieza inicial por si ya está ragdollea'o
+    task.wait(0.2)
+    if isRagdolled(hum) then
+        recoverFromRagdoll(char, hum, hrp)
+    end
+end
+
+-- Loop de seguridad por si algo se escapa
+antiRagdollLoopConn = RunService.Heartbeat:Connect(function()
+    if not antiRagdollEnabled then return end
+    local char = Player.Character
+    if not char then return end
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not hrp then return end
+    if isRagdolled(hum) then
+        -- Solo actuar si el personaje no tiene el carpet equipado
+        -- (para no interferir con vuelo por Flying Carpet)
+        local hasCarpet = false
+        local tool = char:FindFirstChild("Flying Carpet") 
+                  or char:FindFirstChild("Cupid's Wings")
+        if tool then
+            for _, o in ipairs(hrp:GetChildren()) do
+                if o:IsA("BodyVelocity") or o:IsA("BodyPosition") or o:IsA("BodyGyro") then
+                    hasCarpet = true
+                    break
+                end
+            end
+        end
+        if not hasCarpet then
+            recoverFromRagdoll(char, hum, hrp)
+        end
+    end
+end)
+
+-- Aplicar al personaje actual y a los siguientes
+if Player.Character then
+    task.spawn(function() hookAntiRagdoll(Player.Character) end)
+end
+Player.CharacterAdded:Connect(function(c)
+    task.wait(0.3)
+    if antiRagdollEnabled then hookAntiRagdoll(c) end
+end)
+
+local function enableAntiRagdoll()
+    antiRagdollEnabled = true
+    if Player.Character then hookAntiRagdoll(Player.Character) end
+end
+
+local function disableAntiRagdoll()
+    antiRagdollEnabled = false
+    for _, c in ipairs(antiRagdollConnections) do
+        pcall(function() c:Disconnect() end)
+    end
+    antiRagdollConnections = {}
+end
+
+-- =====================================================================
+-- PART 6: WORKSPACE SWEEP + MONITORING
+-- =====================================================================
 
 task.spawn(function()
     task.wait(0.5)
@@ -276,15 +758,16 @@ task.spawn(function()
         if obj:IsA("Model") then
             disableAnimationsOnModel(obj)
             optimizeBrainrot(obj)
+            removeHauntedFuse(obj)
             hideSpecialEvents(obj)
         end
-        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-            pcall(function() obj.Enabled = false end)
+        stripMeshTextures(obj)
+        stripHeavyVisuals(obj)
+        killParticles(obj)
+        applyPartPerf(obj)
+        if obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("SurfaceAppearance") then 
+            pcall(function() obj:Destroy() end) 
         end
-        if obj:IsA("BasePart") and obj.Material ~= Enum.Material.Plastic then
-            pcall(function() obj.Material = Enum.Material.Plastic end)
-        end
-        if obj:IsA("Texture") or obj:IsA("Decal") then pcall(function() obj:Destroy() end) end
     end
 end)
 
@@ -292,29 +775,51 @@ workspace.DescendantAdded:Connect(function(obj)
     if obj:IsA("Model") then
         disableAnimationsOnModel(obj)
         optimizeBrainrot(obj)
+        removeHauntedFuse(obj)
         hideSpecialEvents(obj)
     end
-    if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") then
-        pcall(function() obj.Enabled = false end)
+    stripMeshTextures(obj)
+    stripHeavyVisuals(obj)
+    killParticles(obj)
+    applyPartPerf(obj)
+    if obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("SurfaceAppearance") then 
+        pcall(function() obj:Destroy() end) 
     end
-    if obj:IsA("BasePart") then pcall(function() obj.Material = Enum.Material.Plastic end) end
-    if obj:IsA("Texture") or obj:IsA("Decal") then pcall(function() obj:Destroy() end) end
 end)
 
 startToolMonitoring()
 cleanAllPlayerTools()
 
-task.spawn(function()
-    pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
-    pcall(function()
-        Lighting.GlobalShadows = false
-        Lighting.FogEnd = 1e9
-        Lighting.Brightness = 1
-    end)
+-- =====================================================================
+-- PART 7: INF JUMP (by @rznnq)
+-- =====================================================================
+
+local infinityJumpEnabled = true
+local jumpForce = 50
+local clampFallSpeed = 80
+
+RunService.Heartbeat:Connect(function()
+    if not infinityJumpEnabled then return end
+    local char = Player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp and hrp.Velocity.Y < -clampFallSpeed then
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, -clampFallSpeed, hrp.Velocity.Z)
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if not infinityJumpEnabled then return end
+    local char = Player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.Velocity = Vector3.new(hrp.Velocity.X, jumpForce, hrp.Velocity.Z)
+    end
 end)
 
 -- =====================================================================
--- PART 3: AUTO STEAL
+-- PART 8: AUTO STEAL
 -- =====================================================================
 
 local Config = {
@@ -477,7 +982,7 @@ local function startFPS()
 end
 
 -- =====================================================================
--- PART 4: GUI - Red/Black Style
+-- PART 9: GUI - Red/Black Style
 -- =====================================================================
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -498,7 +1003,7 @@ sg.Parent = Player.PlayerGui
 sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
 local main = Instance.new("Frame", sg)
-main.Size = UDim2.new(0, 280 * guiScale, 0, 130 * guiScale)
+main.Size = UDim2.new(0, 280 * guiScale, 0, 251 * guiScale)
 main.Position = UDim2.new(1, -295 * guiScale, 0, 10 * guiScale)
 main.BackgroundColor3 = Colors.bg
 main.BorderSizePixel = 0
@@ -571,64 +1076,91 @@ separator.BackgroundColor3 = Colors.red
 separator.BackgroundTransparency = 0.7
 separator.BorderSizePixel = 0
 
-local toggleRow = Instance.new("Frame", main)
-toggleRow.Size = UDim2.new(1, -20 * guiScale, 0, 42 * guiScale)
-toggleRow.Position = UDim2.new(0, 10 * guiScale, 0, 46 * guiScale)
-toggleRow.BackgroundTransparency = 1
+local function createToggleRow(parent, yPos, labelText, defaultOn, callback)
+    local row = Instance.new("Frame", parent)
+    row.Size = UDim2.new(1, -20 * guiScale, 0, 38 * guiScale)
+    row.Position = UDim2.new(0, 10 * guiScale, 0, yPos)
+    row.BackgroundTransparency = 1
 
-local toggleLabel = Instance.new("TextLabel", toggleRow)
-toggleLabel.Size = UDim2.new(0.55, 0, 1, 0)
-toggleLabel.Position = UDim2.new(0, 8 * guiScale, 0, 0)
-toggleLabel.BackgroundTransparency = 1
-toggleLabel.Text = "AUTO STEAL"
-toggleLabel.TextColor3 = Colors.text
-toggleLabel.Font = Enum.Font.GothamBold
-toggleLabel.TextSize = 14 * guiScale
-toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    local lbl = Instance.new("TextLabel", row)
+    lbl.Size = UDim2.new(0.55, 0, 1, 0)
+    lbl.Position = UDim2.new(0, 8 * guiScale, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = labelText
+    lbl.TextColor3 = Colors.text
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 14 * guiScale
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
 
-local toggleBg = Instance.new("Frame", toggleRow)
-toggleBg.Size = UDim2.new(0, 48 * guiScale, 0, 24 * guiScale)
-toggleBg.Position = UDim2.new(1, -56 * guiScale, 0.5, -12 * guiScale)
-toggleBg.BackgroundColor3 = Colors.red
-Instance.new("UICorner", toggleBg).CornerRadius = UDim.new(1, 0)
+    local bg = Instance.new("Frame", row)
+    bg.Size = UDim2.new(0, 48 * guiScale, 0, 24 * guiScale)
+    bg.Position = UDim2.new(1, -56 * guiScale, 0.5, -12 * guiScale)
+    bg.BackgroundColor3 = defaultOn and Colors.red or Color3.fromRGB(30, 20, 35)
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(1, 0)
 
-local toggleCircle = Instance.new("Frame", toggleBg)
-toggleCircle.Size = UDim2.new(0, 19 * guiScale, 0, 19 * guiScale)
-toggleCircle.Position = UDim2.new(1, -21 * guiScale, 0.5, -9.5 * guiScale)
-toggleCircle.BackgroundColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", toggleCircle).CornerRadius = UDim.new(1, 0)
+    local circle = Instance.new("Frame", bg)
+    circle.Size = UDim2.new(0, 19 * guiScale, 0, 19 * guiScale)
+    circle.Position = defaultOn and UDim2.new(1, -21 * guiScale, 0.5, -9.5 * guiScale) or UDim2.new(0, 3 * guiScale, 0.5, -9.5 * guiScale)
+    circle.BackgroundColor3 = Color3.new(1, 1, 1)
+    Instance.new("UICorner", circle).CornerRadius = UDim.new(1, 0)
 
-local toggleBtn = Instance.new("TextButton", toggleRow)
-toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-toggleBtn.BackgroundTransparency = 1
-toggleBtn.Text = ""
+    local btn = Instance.new("TextButton", row)
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
 
-local autoStealOn = true
+    local state = defaultOn
+    btn.MouseButton1Click:Connect(function()
+        state = not state
+        TweenService:Create(bg, TweenInfo.new(0.2), {
+            BackgroundColor3 = state and Colors.red or Color3.fromRGB(30, 20, 35)
+        }):Play()
+        TweenService:Create(circle, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+            Position = state and UDim2.new(1, -21 * guiScale, 0.5, -9.5 * guiScale) or UDim2.new(0, 3 * guiScale, 0.5, -9.5 * guiScale)
+        }):Play()
+        callback(state)
+    end)
+    
+    return row
+end
 
-toggleBtn.MouseButton1Click:Connect(function()
-    autoStealOn = not autoStealOn
-    Config.AutoSteal = autoStealOn
-    TweenService:Create(toggleBg, TweenInfo.new(0.2), {
-        BackgroundColor3 = autoStealOn and Colors.red or Color3.fromRGB(30, 20, 35)
-    }):Play()
-    TweenService:Create(toggleCircle, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
-        Position = autoStealOn and UDim2.new(1, -21 * guiScale, 0.5, -9.5 * guiScale) or UDim2.new(0, 3 * guiScale, 0.5, -9.5 * guiScale)
-    }):Play()
-    if autoStealOn then startAutoSteal() else stopAutoSteal() end
+createToggleRow(main, 46 * guiScale, "AUTO STEAL", true, function(state)
+    Config.AutoSteal = state
+    if state then startAutoSteal() else stopAutoSteal() end
+end)
+
+createToggleRow(main, 84 * guiScale, "INF JUMP", true, function(state)
+    infinityJumpEnabled = state
+end)
+
+createToggleRow(main, 122 * guiScale, "AKA X-RAY", false, function(state)
+    if state then
+        enableAKAXray()
+    else
+        disableAKAXray()
+    end
+end)
+
+createToggleRow(main, 160 * guiScale, "ANTI-RAGDOLL", true, function(state)
+    if state then
+        enableAntiRagdoll()
+    else
+        disableAntiRagdoll()
+    end
 end)
 
 local infoRow = Instance.new("Frame", main)
 infoRow.Size = UDim2.new(1, -20 * guiScale, 0, 28 * guiScale)
-infoRow.Position = UDim2.new(0, 10 * guiScale, 0, 94 * guiScale)
+infoRow.Position = UDim2.new(0, 10 * guiScale, 0, 214 * guiScale)
 infoRow.BackgroundTransparency = 1
 
 local infoLabel = Instance.new("TextLabel", infoRow)
 infoLabel.Size = UDim2.new(1, 0, 1, 0)
 infoLabel.BackgroundTransparency = 1
-infoLabel.Text = "STEAL RADIUS: 59  |  DURATION: 1.3s"
+infoLabel.Text = "INF JUMP @rznnq | ANTI-RAGDOLL REP-STYLE"
 infoLabel.TextColor3 = Colors.redLight
 infoLabel.Font = Enum.Font.GothamBold
-infoLabel.TextSize = 11 * guiScale
+infoLabel.TextSize = 10 * guiScale
 infoLabel.TextXAlignment = Enum.TextXAlignment.Center
 
 -- =====================================================================
@@ -691,6 +1223,31 @@ progClose.MouseButton1Click:Connect(function()
 end)
 
 -- =====================================================================
+-- PART 10: MAINTENANCE LOOP (FPS sin tocar cámara)
+-- =====================================================================
+
+task.spawn(function()
+    while task.wait(5) do
+        pcall(function()
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and obj.CastShadow then
+                    obj.CastShadow = false
+                end
+                if (obj:IsA("Highlight") or obj:IsA("Beam")) and obj.Enabled then
+                    obj.Enabled = false
+                end
+                if (obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke")) and obj.Enabled then
+                    obj.Enabled = false
+                end
+                if (obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight")) and obj.Enabled then
+                    obj.Enabled = false
+                end
+            end
+        end)
+    end
+end)
+
+-- =====================================================================
 -- INITIALIZE
 -- =====================================================================
 
@@ -699,5 +1256,5 @@ startAutoSteal()
 
 print("========================================")
 print("XENHUB - LOADED SUCCESSFULLY")
-print("by KWP")
+print("by KWP | INF JUMP @rznnq | AKA X-RAY + ANTI-RAGDOLL REP integrados")
 print("========================================")
